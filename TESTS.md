@@ -2,11 +2,11 @@
 
 ## Automated Tests
 - `tests/audit-engine.spec.ts`:
-  - Correctly computes monthly and annual savings by tool
-  - Flags over-provisioned team plans for low seat counts
-  - Recommends same-vendor downgrade when fit exists
-  - Recommends alternative vendor when materially cheaper and capability-fit
-  - Returns honest outcome when spend is already near-optimal
+  - computes monthly and annual savings totals
+  - flags over-provisioned team plans for low seat counts
+  - recommends same-vendor downgrade when materially cheaper
+  - recommends alternative vendor when substantially cheaper
+  - returns honest keep recommendation when already cost-efficient
 
 ## How to run
 - `npm test`

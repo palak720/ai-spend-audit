@@ -7,12 +7,12 @@
 **Blockers / what I'm stuck on:** Need final verified pricing values from official vendor pages for this week.
 **Plan for tomorrow:** Implement core data models and deterministic audit engine with tests.
 
-## Day 2 - YYYY-MM-DD
-**Hours worked:** X
-**What I did:** ...
-**What I learned:** ...
-**Blockers / what I'm stuck on:** ...
-**Plan for tomorrow:** ...
+## Day 2 - 2026-05-22
+**Hours worked:** 4
+**What I did:** Implemented typed pricing schema, deterministic audit engine rules, and a runnable Vitest suite with 5 audit-focused tests. Added TypeScript and Vitest config and validated behavior through automated tests.
+**What I learned:** Deterministic recommendation thresholds and rule ordering matter a lot for producing honest outcomes in low-savings scenarios.
+**Blockers / what I'm stuck on:** Pricing values are currently placeholder modeling values and must be replaced with official source-backed numbers in PRICING_DATA.md.
+**Plan for tomorrow:** Build spend input form with local persistence and connect it to the audit engine output UI.
 
 ## Day 3 - YYYY-MM-DD
 **Hours worked:** X
