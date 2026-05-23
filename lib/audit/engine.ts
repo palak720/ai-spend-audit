@@ -28,6 +28,11 @@ function rounded(value: number): number {
 
 function minPricedPlanForSeats(tool: Vendor, seats: number): PlanInfo {
   const plans = pricingByTool[tool].filter((p) => p.type === "seat");
+  if (plans.length === 0) {
+    // API-only tools have no seat plans; keep the single usage plan as baseline.
+    return pricingByTool[tool][0];
+  }
+
   const sorted = [...plans].sort((a, b) => a.monthlyPriceUsd - b.monthlyPriceUsd);
 
   const viable = sorted.find((p) => {
@@ -57,7 +62,10 @@ function findAlternative(
     }
 
     const plan = minPricedPlanForSeats(tool, seats);
-    const cost = seatBasedCost(plan.monthlyPriceUsd, seats);
+    const cost =
+      plan.type === "seat"
+        ? seatBasedCost(plan.monthlyPriceUsd, seats)
+        : plan.monthlyPriceUsd;
 
     if (!best || cost < best.cost) {
       best = { tool, plan, cost };
@@ -77,7 +85,10 @@ function evaluateOne(input: ToolInput, parent: AuditInput): ToolAuditResult {
     ? input.currentMonthlySpendUsd
     : inferredCurrent;
   const sameVendorBestPlan = minPricedPlanForSeats(input.tool, input.seats);
-  const sameVendorCost = seatBasedCost(sameVendorBestPlan.monthlyPriceUsd, input.seats);
+  const sameVendorCost =
+    sameVendorBestPlan.type === "seat"
+      ? seatBasedCost(sameVendorBestPlan.monthlyPriceUsd, input.seats)
+      : sameVendorBestPlan.monthlyPriceUsd;
 
   const alternative = findAlternative(input, parent.primaryUseCase, input.seats);
   const bestAltCost = alternative?.cost ?? Number.POSITIVE_INFINITY;
