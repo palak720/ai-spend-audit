@@ -14,6 +14,20 @@ function clientIp(request: Request): string {
 }
 
 export async function POST(request: Request) {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json(
+      { error: "Server is missing Supabase configuration. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY." },
+      { status: 503 }
+    );
+  }
+
+  if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) {
+    return NextResponse.json(
+      { error: "Server is missing email configuration. Set RESEND_API_KEY and RESEND_FROM_EMAIL." },
+      { status: 503 }
+    );
+  }
+
   const ip = clientIp(request);
 
   if (isRateLimited(`lead:${ip}`)) {

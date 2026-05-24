@@ -70,43 +70,47 @@ export default function SpendAuditForm() {
 
     setLeadStatus("loading");
     setLeadMessage("");
+    try {
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: leadEmail,
+          companyName: leadCompanyName || undefined,
+          role: leadRole || undefined,
+          teamSize: leadTeamSize,
+          honeypot,
+          auditSnapshot: {
+            totalMonthlySavingsUsd: result.totalMonthlySavingsUsd,
+            totalAnnualSavingsUsd: result.totalAnnualSavingsUsd,
+            primaryUseCase: state.primaryUseCase,
+            tools: result.toolResults.map((row) => ({
+              tool: row.tool,
+              currentPlan: row.currentPlan,
+              currentMonthlySpendUsd: row.currentMonthlySpendUsd,
+              recommendedPlan: row.recommendedPlan,
+              recommendedMonthlySpendUsd: row.recommendedMonthlySpendUsd,
+              monthlySavingsUsd: row.monthlySavingsUsd,
+              reason: row.reason
+            }))
+          }
+        })
+      });
 
-    const response = await fetch("/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: leadEmail,
-        companyName: leadCompanyName || undefined,
-        role: leadRole || undefined,
-        teamSize: leadTeamSize,
-        honeypot,
-        auditSnapshot: {
-          totalMonthlySavingsUsd: result.totalMonthlySavingsUsd,
-          totalAnnualSavingsUsd: result.totalAnnualSavingsUsd,
-          primaryUseCase: state.primaryUseCase,
-          tools: result.toolResults.map((row) => ({
-            tool: row.tool,
-            currentPlan: row.currentPlan,
-            currentMonthlySpendUsd: row.currentMonthlySpendUsd,
-            recommendedPlan: row.recommendedPlan,
-            recommendedMonthlySpendUsd: row.recommendedMonthlySpendUsd,
-            monthlySavingsUsd: row.monthlySavingsUsd,
-            reason: row.reason
-          }))
-        }
-      })
-    });
+      const data = (await response.json()) as { error?: string };
 
-    const data = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        setLeadStatus("error");
+        setLeadMessage(data.error ?? "Failed to submit lead.");
+        return;
+      }
 
-    if (!response.ok) {
+      setLeadStatus("success");
+      setLeadMessage("Audit saved. Check your email for confirmation.");
+    } catch {
       setLeadStatus("error");
-      setLeadMessage(data.error ?? "Failed to submit lead.");
-      return;
+      setLeadMessage("Could not reach server. Check if app is running and try again.");
     }
-
-    setLeadStatus("success");
-    setLeadMessage("Audit saved. Check your email for confirmation.");
   };
 
   return (
