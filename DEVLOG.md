@@ -21,12 +21,12 @@
 **Blockers / what I'm stuck on:** Need to replace placeholder plan prices with official source-backed values and then calibrate recommendation thresholds using real-world interview data.
 **Plan for tomorrow:** Implement lead capture backend (storage + confirmation email) and basic abuse protection.
 
-## Day 4 - YYYY-MM-DD
-**Hours worked:** X
-**What I did:** ...
-**What I learned:** ...
-**Blockers / what I'm stuck on:** ...
-**Plan for tomorrow:** ...
+## Day 4 - 2026-05-24
+**Hours worked:** 5
+**What I did:** Added `/api/leads` backend route with payload validation, honeypot bot trap, and in-memory IP rate limiting. Integrated Supabase REST write for lead storage and Resend transactional email sending. Wired a post-audit lead form (email + optional company/role/team size) to the API and verified with both tests and production build.
+**What I learned:** Keeping anti-abuse checks in the API route (not only client-side) is essential, and simple honeypot + rate-limit layers give solid baseline protection for MVP stage.
+**Blockers / what I'm stuck on:** Need to run a real end-to-end test against live Supabase and Resend keys to validate delivery and table schema alignment.
+**Plan for tomorrow:** Build shareable result URL flow and sanitize public output for PII-safe sharing.
 
 ## Day 5 - YYYY-MM-DD
 **Hours worked:** X

@@ -19,6 +19,13 @@ function emptyTool(tool: Vendor): ToolInput {
 export default function SpendAuditForm() {
   const [state, setState] = useState<SpendFormState>(defaultFormState);
   const [result, setResult] = useState<AuditResult | null>(null);
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadCompanyName, setLeadCompanyName] = useState("");
+  const [leadRole, setLeadRole] = useState("");
+  const [leadTeamSize, setLeadTeamSize] = useState<number>(state.teamSize);
+  const [honeypot, setHoneypot] = useState("");
+  const [leadStatus, setLeadStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [leadMessage, setLeadMessage] = useState("");
 
   useEffect(() => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -44,13 +51,62 @@ export default function SpendAuditForm() {
 
   const onSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    setResult(
-      runAudit({
-        teamSize: state.teamSize,
-        primaryUseCase: state.primaryUseCase,
-        tools: state.tools
+    const nextResult = runAudit({
+      teamSize: state.teamSize,
+      primaryUseCase: state.primaryUseCase,
+      tools: state.tools
+    });
+    setResult(nextResult);
+    setLeadTeamSize(state.teamSize);
+    setLeadStatus("idle");
+    setLeadMessage("");
+  };
+
+  const onLeadSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!result) {
+      return;
+    }
+
+    setLeadStatus("loading");
+    setLeadMessage("");
+
+    const response = await fetch("/api/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: leadEmail,
+        companyName: leadCompanyName || undefined,
+        role: leadRole || undefined,
+        teamSize: leadTeamSize,
+        honeypot,
+        auditSnapshot: {
+          totalMonthlySavingsUsd: result.totalMonthlySavingsUsd,
+          totalAnnualSavingsUsd: result.totalAnnualSavingsUsd,
+          primaryUseCase: state.primaryUseCase,
+          tools: result.toolResults.map((row) => ({
+            tool: row.tool,
+            currentPlan: row.currentPlan,
+            currentMonthlySpendUsd: row.currentMonthlySpendUsd,
+            recommendedPlan: row.recommendedPlan,
+            recommendedMonthlySpendUsd: row.recommendedMonthlySpendUsd,
+            monthlySavingsUsd: row.monthlySavingsUsd,
+            reason: row.reason
+          }))
+        }
       })
-    );
+    });
+
+    const data = (await response.json()) as { error?: string };
+
+    if (!response.ok) {
+      setLeadStatus("error");
+      setLeadMessage(data.error ?? "Failed to submit lead.");
+      return;
+    }
+
+    setLeadStatus("success");
+    setLeadMessage("Audit saved. Check your email for confirmation.");
   };
 
   return (
@@ -212,7 +268,7 @@ export default function SpendAuditForm() {
               <article key={`${row.tool}-${row.currentPlan}`} className="toolCard">
                 <h3>{vendorLabel(row.tool)}</h3>
                 <p>
-                  ${row.currentMonthlySpendUsd.toFixed(2)} / mo ? ${row.recommendedMonthlySpendUsd.toFixed(2)} / mo
+                  ${row.currentMonthlySpendUsd.toFixed(2)} / mo to ${row.recommendedMonthlySpendUsd.toFixed(2)} / mo
                 </p>
                 <p>
                   Action: {row.recommendedAction} ({vendorLabel(row.recommendedTool)} - {row.recommendedPlan})
@@ -222,6 +278,60 @@ export default function SpendAuditForm() {
               </article>
             ))}
           </div>
+
+          <form onSubmit={onLeadSubmit} className="panel">
+            <h3>Get this report on email</h3>
+            <div className="grid">
+              <label>
+                Work email
+                <input
+                  type="email"
+                  required
+                  value={leadEmail}
+                  onChange={(e) => setLeadEmail(e.target.value)}
+                />
+              </label>
+              <label>
+                Company name (optional)
+                <input
+                  type="text"
+                  value={leadCompanyName}
+                  onChange={(e) => setLeadCompanyName(e.target.value)}
+                />
+              </label>
+              <label>
+                Role (optional)
+                <input type="text" value={leadRole} onChange={(e) => setLeadRole(e.target.value)} />
+              </label>
+              <label>
+                Team size (optional)
+                <input
+                  type="number"
+                  min={1}
+                  value={leadTeamSize}
+                  onChange={(e) => setLeadTeamSize(Number(e.target.value) || 1)}
+                />
+              </label>
+            </div>
+
+            <input
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              className="hp"
+              aria-hidden="true"
+            />
+
+            <div className="actions">
+              <button type="submit" disabled={leadStatus === "loading"}>
+                {leadStatus === "loading" ? "Submitting..." : "Save report"}
+              </button>
+            </div>
+
+            {leadMessage ? <p>{leadMessage}</p> : null}
+          </form>
         </section>
       ) : null}
     </div>
