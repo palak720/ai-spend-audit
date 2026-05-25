@@ -26,6 +26,8 @@ export default function SpendAuditForm() {
   const [honeypot, setHoneypot] = useState("");
   const [leadStatus, setLeadStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [leadMessage, setLeadMessage] = useState("");
+  const [shareStatus, setShareStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [shareUrl, setShareUrl] = useState("");
 
   useEffect(() => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -60,6 +62,8 @@ export default function SpendAuditForm() {
     setLeadTeamSize(state.teamSize);
     setLeadStatus("idle");
     setLeadMessage("");
+    setShareStatus("idle");
+    setShareUrl("");
   };
 
   const onLeadSubmit = async (event: React.FormEvent) => {
@@ -110,6 +114,52 @@ export default function SpendAuditForm() {
     } catch {
       setLeadStatus("error");
       setLeadMessage("Could not reach server. Check if app is running and try again.");
+    }
+  };
+
+  const onCreateShareLink = async () => {
+    if (!result) {
+      return;
+    }
+
+    setShareStatus("loading");
+    setShareUrl("");
+
+    try {
+      const response = await fetch("/api/audits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          totalMonthlySavingsUsd: result.totalMonthlySavingsUsd,
+          totalAnnualSavingsUsd: result.totalAnnualSavingsUsd,
+          primaryUseCase: state.primaryUseCase,
+          tools: result.toolResults.map((row) => ({
+            tool: row.tool,
+            currentPlan: row.currentPlan,
+            currentMonthlySpendUsd: row.currentMonthlySpendUsd,
+            recommendedPlan: row.recommendedPlan,
+            recommendedMonthlySpendUsd: row.recommendedMonthlySpendUsd,
+            monthlySavingsUsd: row.monthlySavingsUsd,
+            reason: row.reason
+          }))
+        })
+      });
+
+      const data = (await response.json()) as { publicId?: string; error?: string };
+      if (!response.ok || !data.publicId) {
+        setShareStatus("error");
+        setShareUrl(data.error ?? "Failed to create share link.");
+        return;
+      }
+
+      const base = window.location.origin;
+      const url = `${base}/audit/${data.publicId}`;
+      setShareStatus("success");
+      setShareUrl(url);
+      await navigator.clipboard.writeText(url);
+    } catch {
+      setShareStatus("error");
+      setShareUrl("Could not create share link right now.");
     }
   };
 
@@ -266,6 +316,14 @@ export default function SpendAuditForm() {
               <strong>${result.totalAnnualSavingsUsd.toFixed(2)}</strong>
             </div>
           </div>
+
+          <div className="actions">
+            <button type="button" onClick={onCreateShareLink} disabled={shareStatus === "loading"}>
+              {shareStatus === "loading" ? "Creating..." : "Create share link"}
+            </button>
+          </div>
+          {shareStatus === "success" ? <p>Share URL copied: {shareUrl}</p> : null}
+          {shareStatus === "error" ? <p>{shareUrl}</p> : null}
 
           <div className="stack">
             {result.toolResults.map((row) => (

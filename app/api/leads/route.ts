@@ -21,13 +21,6 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) {
-    return NextResponse.json(
-      { error: "Server is missing email configuration. Set RESEND_API_KEY and RESEND_FROM_EMAIL." },
-      { status: 503 }
-    );
-  }
-
   const ip = clientIp(request);
 
   if (isRateLimited(`lead:${ip}`)) {
@@ -63,14 +56,16 @@ export async function POST(request: Request) {
       totalAnnualSavingsUsd: payload.auditSnapshot.totalAnnualSavingsUsd,
       auditSnapshot: payload.auditSnapshot
     });
+    const hasEmailConfig = Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL);
+    if (hasEmailConfig) {
+      await sendLeadConfirmationEmail({
+        toEmail: payload.email,
+        monthlySavingsUsd: payload.auditSnapshot.totalMonthlySavingsUsd,
+        annualSavingsUsd: payload.auditSnapshot.totalAnnualSavingsUsd
+      });
+    }
 
-    await sendLeadConfirmationEmail({
-      toEmail: payload.email,
-      monthlySavingsUsd: payload.auditSnapshot.totalMonthlySavingsUsd,
-      annualSavingsUsd: payload.auditSnapshot.totalAnnualSavingsUsd
-    });
-
-    return NextResponse.json({ ok: true, leadId: saved.id });
+    return NextResponse.json({ ok: true, leadId: saved.id, emailSkipped: !hasEmailConfig });
   } catch (error) {
     console.error("Lead capture failed", error);
     return NextResponse.json({ error: "Failed to capture lead" }, { status: 500 });

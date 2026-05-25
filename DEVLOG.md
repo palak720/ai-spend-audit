@@ -28,12 +28,12 @@
 **Blockers / what I'm stuck on:** Need to run a real end-to-end test against live Supabase and Resend keys to validate delivery and table schema alignment.
 **Plan for tomorrow:** Build shareable result URL flow and sanitize public output for PII-safe sharing.
 
-## Day 5 - YYYY-MM-DD
-**Hours worked:** X
-**What I did:** ...
-**What I learned:** ...
-**Blockers / what I'm stuck on:** ...
-**Plan for tomorrow:** ...
+## Day 5 - 2026-05-25
+**Hours worked:** 5
+**What I did:** Implemented shareable public audit URLs using a dedicated `public_audits` table and new `/api/audits` endpoint. Added a “Create share link” flow in the results UI with copy-to-clipboard behavior. Built dynamic `/audit/[id]` page rendering sanitized audit data only, and added per-audit Open Graph + Twitter metadata generation.
+**What I learned:** Separating share records from lead records keeps privacy boundaries explicit and avoids accidental PII leaks in public pages.
+**Blockers / what I'm stuck on:** Need to apply the Day 5 migration in Supabase and validate OG previews on deployed URL (Twitter/X and LinkedIn cache behavior).
+**Plan for tomorrow:** Add AI-generated personalized summary with graceful fallback, then tighten UI/accessibility and finalize docs.
 
 ## Day 6 - YYYY-MM-DD
 **Hours worked:** X
