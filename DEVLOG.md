@@ -35,12 +35,12 @@
 **Blockers / what I'm stuck on:** Need to apply the Day 5 migration in Supabase and validate OG previews on deployed URL (Twitter/X and LinkedIn cache behavior).
 **Plan for tomorrow:** Add AI-generated personalized summary with graceful fallback, then tighten UI/accessibility and finalize docs.
 
-## Day 6 - YYYY-MM-DD
-**Hours worked:** X
-**What I did:** ...
-**What I learned:** ...
-**Blockers / what I'm stuck on:** ...
-**Plan for tomorrow:** ...
+## Day 6 - 2026-05-26
+**Hours worked:** 5
+**What I did:** Added `/api/summary` endpoint that generates a personalized summary using Anthropic when available and falls back to deterministic templated output on missing key, timeout, or API error. Wired summary generation into results flow and rendered it in a dedicated summary card. Improved accessibility with semantic `main` landmark, skip link, live regions for status updates, stronger focus-visible styles, and clearer disabled states. Added metadata/viewport refinements to support better Lighthouse mobile best-practices and accessibility outcomes.
+**What I learned:** Reliable fallback behavior is as important as model quality for production trust, especially when external APIs can fail or be unavailable.
+**Blockers / what I'm stuck on:** Need final Lighthouse run on deployed URL and minor visual tuning based on that report.
+**Plan for tomorrow:** Final polish, complete pricing-source verification, and finish all submission docs/screenshots before final deploy.
 
 ## Day 7 - YYYY-MM-DD
 **Hours worked:** X

@@ -28,6 +28,8 @@ export default function SpendAuditForm() {
   const [leadMessage, setLeadMessage] = useState("");
   const [shareStatus, setShareStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [shareUrl, setShareUrl] = useState("");
+  const [summaryStatus, setSummaryStatus] = useState<"idle" | "loading" | "ready">("idle");
+  const [summaryText, setSummaryText] = useState("");
 
   useEffect(() => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -64,6 +66,39 @@ export default function SpendAuditForm() {
     setLeadMessage("");
     setShareStatus("idle");
     setShareUrl("");
+    setSummaryStatus("loading");
+    setSummaryText("");
+    void generateSummary(nextResult);
+  };
+
+  const generateSummary = async (audit: AuditResult) => {
+    const payload = {
+      primaryUseCase: state.primaryUseCase,
+      teamSize: state.teamSize,
+      currentMonthlySpendUsd: audit.totalCurrentMonthlyUsd,
+      totalMonthlySavingsUsd: audit.totalMonthlySavingsUsd,
+      totalAnnualSavingsUsd: audit.totalAnnualSavingsUsd,
+      recommendations: audit.toolResults.map((row) => ({
+        tool: row.tool,
+        recommendedPlan: row.recommendedPlan,
+        monthlySavingsUsd: row.monthlySavingsUsd,
+        reason: row.reason
+      }))
+    };
+
+    try {
+      const response = await fetch("/api/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = (await response.json()) as { summary?: string };
+      setSummaryText(data.summary ?? "Summary unavailable.");
+    } catch {
+      setSummaryText("Summary unavailable right now, but your audit numbers are still accurate.");
+    } finally {
+      setSummaryStatus("ready");
+    }
   };
 
   const onLeadSubmit = async (event: React.FormEvent) => {
@@ -101,7 +136,7 @@ export default function SpendAuditForm() {
         })
       });
 
-      const data = (await response.json()) as { error?: string };
+      const data = (await response.json()) as { error?: string; emailSkipped?: boolean };
 
       if (!response.ok) {
         setLeadStatus("error");
@@ -110,7 +145,11 @@ export default function SpendAuditForm() {
       }
 
       setLeadStatus("success");
-      setLeadMessage("Audit saved. Check your email for confirmation.");
+      setLeadMessage(
+        data.emailSkipped
+          ? "Audit saved successfully. Email confirmation is temporarily disabled."
+          : "Audit saved. Check your email for confirmation."
+      );
     } catch {
       setLeadStatus("error");
       setLeadMessage("Could not reach server. Check if app is running and try again.");
@@ -164,7 +203,7 @@ export default function SpendAuditForm() {
   };
 
   return (
-    <div className="wrap">
+    <main className="wrap" id="main-content">
       <h1>AI Spend Auditor</h1>
       <p>Enter your stack to get an instant, deterministic spend audit.</p>
 
@@ -274,6 +313,7 @@ export default function SpendAuditForm() {
               <button
                 type="button"
                 className="danger"
+                aria-label={`Remove ${vendorLabel(tool.tool)} from audit`}
                 onClick={() => {
                   if (state.tools.length === 1) {
                     return;
@@ -304,7 +344,7 @@ export default function SpendAuditForm() {
       </form>
 
       {result ? (
-        <section className="panel">
+        <section className="panel" aria-live="polite" aria-atomic="true">
           <h2>Audit Results</h2>
           <div className="totals">
             <div>
@@ -317,13 +357,18 @@ export default function SpendAuditForm() {
             </div>
           </div>
 
+          <section className="panel summaryCard" aria-live="polite">
+            <h3>Personalized Summary</h3>
+            {summaryStatus === "loading" ? <p>Generating summary...</p> : <p>{summaryText}</p>}
+          </section>
+
           <div className="actions">
             <button type="button" onClick={onCreateShareLink} disabled={shareStatus === "loading"}>
               {shareStatus === "loading" ? "Creating..." : "Create share link"}
             </button>
           </div>
-          {shareStatus === "success" ? <p>Share URL copied: {shareUrl}</p> : null}
-          {shareStatus === "error" ? <p>{shareUrl}</p> : null}
+          {shareStatus === "success" ? <p role="status">Share URL copied: {shareUrl}</p> : null}
+          {shareStatus === "error" ? <p role="alert">{shareUrl}</p> : null}
 
           <div className="stack">
             {result.toolResults.map((row) => (
@@ -392,10 +437,10 @@ export default function SpendAuditForm() {
               </button>
             </div>
 
-            {leadMessage ? <p>{leadMessage}</p> : null}
+            {leadMessage ? <p role={leadStatus === "error" ? "alert" : "status"}>{leadMessage}</p> : null}
           </form>
         </section>
       ) : null}
-    </div>
+    </main>
   );
 }
