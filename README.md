@@ -42,7 +42,7 @@ AI Spend Auditor is a free web app for founders and engineering managers to audi
 5. Lightweight anti-abuse (honeypot + IP rate limit) for MVP-stage protection without heavy user friction.
 
 ## Deployed URL
-- Add deployed link here
+- https://ai-spend-audit-wv7j.vercel.app/
 
 ## Pre-Submission Checklist
 - [ ] Update `PRICING_DATA.md` with official vendor URLs and verification dates
