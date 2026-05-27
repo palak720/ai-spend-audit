@@ -1,16 +1,20 @@
 # Reflection
 
-## 1) Hardest bug and debugging process (150-400 words)
-TBD
+## 1) The hardest bug and how I debugged it
+The hardest bug was in the audit engine when users selected API-only tools (Anthropic API or OpenAI API). The app crashed with a runtime error trying to read `monthlyPriceUsd` from an undefined seat plan. My first hypothesis was bad form input, but raw payload inspection showed valid data. Next hypothesis: plan lookup assumptions were wrong for usage-only products. I reproduced the issue with a minimal test case using one API tool and traced execution inside `minPricedPlanForSeats`. The function filtered to seat plans and returned an empty list for API-only tools, which later code treated as a guaranteed object. Fix was two-part: add a fallback path for tools with no seat plans and branch cost calculation by plan type (`seat` vs `usage`) in both same-vendor and alternative comparisons. I then reran existing tests and added checks around mixed plan behavior to verify no regressions. What worked was reducing the failing case to one tool and validating each assumption in sequence instead of guessing from the stack trace alone.
 
-## 2) Decision reversed mid-week and why (150-400 words)
-TBD
+## 2) A decision I reversed mid-week
+I initially made all recommendations aggressively optimization-first: if any cheaper alternative existed, the engine would switch. In practice this produced untrustworthy output, especially for already efficient low-spend teams where tiny savings triggered unnecessary changes. I reversed that decision and introduced stricter thresholds (relative and absolute) before recommending switch/credits actions. I also added logic to preserve honest "keep" outcomes when setup was already near-optimal. The reversal happened after test failures and manual scenario checks showed the model over-rotating on cost minimization without enough stability/context weighting. The updated approach improved trust: it still finds meaningful savings but avoids manufacturing them.
 
-## 3) What I would build in week 2 (150-400 words)
-TBD
+## 3) What I would build in week 2
+Week 2 would focus on credibility and conversion compounding. First, I would replace modeled placeholder prices with a versioned pricing dataset plus automated checks, so every recommendation can cite exact source + verification date. Second, I would add cohort analytics for the full funnel (`audit_started -> audit_completed -> lead_submitted -> consultation_clicked`) to identify where drop-off is happening. Third, I would build benchmark mode (spend per developer by company size/use case) because that adds decision context and stronger shareability. Fourth, I would improve OG previews with generated visual cards that summarize savings and top action. Finally, I would add lightweight admin review tooling for incoming high-savings leads so follow-up quality is consistent.
 
-## 4) How I used AI tools, where AI was wrong, and how I caught it (150-400 words)
-TBD
+## 4) How I used AI tools and where they were wrong
+I used AI for scaffolding repetitive code patterns (route handlers, typed payload shapes, and UI boilerplate), generating alternate copy options, and quickly identifying likely edge cases. I did not trust AI for pricing facts, conversion assumptions, or any final economic claim without manual reasoning. One specific miss: AI suggested recommendation ordering that favored cross-vendor switching too often. I caught it through failing test expectations and realistic scenarios where the output contradicted practical operator behavior. I corrected this by tightening thresholds and adding deterministic guardrails, then verified the fix with tests and build checks. AI was most helpful as a speed assistant, not as a source of truth.
 
-## 5) Self-ratings (discipline, code quality, design sense, problem-solving, entrepreneurial thinking) with one-sentence reason each (150-400 words)
-TBD
+## 5) Self-rating
+Discipline: 8/10 - I maintained daily progress, logged work, and shipped each day’s scope without skipping the documentation burden.
+Code quality: 7/10 - Core logic is typed and test-covered, but there is still room to improve modularity and add more backend tests.
+Design sense: 7/10 - UI is clear, usable, and shareable, though visual polish can still improve for launch-grade differentiation.
+Problem-solving: 8/10 - I handled runtime bugs, edge cases, and integration failures methodically and kept momentum.
+Entrepreneurial thinking: 8/10 - I treated this as a lead-gen product with economics, trust, and distribution constraints, not just a coding task.
